@@ -8,65 +8,44 @@
 <body>
     <style>
         html,body{height:100%;margin:0}
-        #viewer{height:100vh}
-        #pdfFrame{width:100%;height:100%;border:0}
-        #fallback{display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;font-family:system-ui,Segoe UI,Roboto,Arial}
-        #fallback p{max-width:600px;text-align:center}
-        .btn{display:inline-block;margin-top:12px;padding:8px 12px;background:#1a73e8;color:#fff;border-radius:6px;text-decoration:none}
+        .f1{display:block;width:100%;height:85vh;object-fit:contain;background:#f5f5f7}
+        .f1-wrap{height:85vh;display:flex;align-items:center;justify-content:center;overflow:hidden}
+        .f1 img{max-height:100%;max-width:100%;display:block}
+        .f2{display:block;width:100%;height:auto}
+        .f2 img{width:100%;height:auto;display:block}
+        .container{max-width:100%;margin:0}
     </style>
 
-    <div id="viewer">
-        <iframe id="pdfFrame" title="PDF Viewer"></iframe>
-    </div>
-
-    <div id="fallback" style="display:none">
-        <p>Couldn't load the default PDF. Choose a PDF file to view in-page, or append <code>?pdf=FILE.pdf</code> to the URL.</p>
-        <input id="fileInput" type="file" accept="application/pdf">
-        <a id="downloadLink" class="btn" style="display:none" target="_blank">Open PDF in new tab</a>
+    <div class="container">
+        <div class="f1-wrap" id="f1wrap">
+            <img id="f1" alt="first image (covers 85% height)">
+        </div>
+        <div class="f2" id="f2wrap">
+            <img id="f2" alt="second image (full width)">
+        </div>
     </div>
 
 <script>
     (function(){
         const params = new URLSearchParams(location.search);
-        const pdfPath = params.get('pdf') || 'AbdulazizGoodConduct.pdf';
-        const frame = document.getElementById('pdfFrame');
-        const fallback = document.getElementById('fallback');
-        const viewer = document.getElementById('viewer');
-        const fileInput = document.getElementById('fileInput');
-        const downloadLink = document.getElementById('downloadLink');
+        // Accept f1 and f2 parameters, otherwise try some sensible defaults
+        const f1 = params.get('f1') || 'f1.png' ;
+        const f2 = params.get('f2') || 'f2.png' ;
+        const img1 = document.getElementById('f1');
+        const img2 = document.getElementById('f2');
 
-        function showFallback(message){
-            viewer.style.display = 'none';
-            fallback.style.display = 'flex';
-            if(message) fallback.querySelector('p').textContent = message;
+        function setSrc(img, src){
+            img.src = src;
+            img.addEventListener('error', ()=>{
+                img.style.display = 'none';
+            });
+            img.addEventListener('click', ()=>{
+                try{ window.open(src, '_blank'); }catch(e){}
+            });
         }
 
-        // Try to fetch HEAD to confirm existence (works when served over HTTP)
-        fetch(pdfPath, { method: 'HEAD' }).then(res => {
-            if(res.ok){
-                frame.src = pdfPath;
-                downloadLink.href = pdfPath; downloadLink.style.display = 'inline-block';
-            } else {
-                showFallback('Default PDF not found at "' + pdfPath + '". Use the file picker below or provide a valid `?pdf=` URL parameter.');
-            }
-        }).catch(()=>{
-            // If fetch fails (e.g. file:// or CORS), still attempt to set src — browser may handle it.
-            frame.src = pdfPath;
-            // Delay a short time and if frame failed to load, reveal fallback via user action.
-            setTimeout(()=>{
-                downloadLink.href = pdfPath; downloadLink.style.display = 'inline-block';
-            }, 500);
-        });
-
-        fileInput.addEventListener('change', e=>{
-            const f = e.target.files && e.target.files[0];
-            if(!f) return;
-            const url = URL.createObjectURL(f);
-            viewer.style.display = '';
-            fallback.style.display = 'none';
-            frame.src = url;
-            downloadLink.href = url; downloadLink.style.display = 'inline-block';
-        });
+        setSrc(img1, f1);
+        setSrc(img2, f2);
     })();
 </script>
 </body>

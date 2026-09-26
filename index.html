@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Viewer</title>
+</head>
+<body>
+    <style>
+        html,body{height:100%;margin:0}
+        #viewer{height:100vh}
+        #pdfFrame{width:100%;height:100%;border:0}
+        #fallback{display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;font-family:system-ui,Segoe UI,Roboto,Arial}
+        #fallback p{max-width:600px;text-align:center}
+        .btn{display:inline-block;margin-top:12px;padding:8px 12px;background:#1a73e8;color:#fff;border-radius:6px;text-decoration:none}
+    </style>
+
+    <div id="viewer">
+        <iframe id="pdfFrame" title="PDF Viewer"></iframe>
+    </div>
+
+    <div id="fallback" style="display:none">
+        <p>Couldn't load the default PDF. Choose a PDF file to view in-page, or append <code>?pdf=FILE.pdf</code> to the URL.</p>
+        <input id="fileInput" type="file" accept="application/pdf">
+        <a id="downloadLink" class="btn" style="display:none" target="_blank">Open PDF in new tab</a>
+    </div>
+
+<script>
+    (function(){
+        const params = new URLSearchParams(location.search);
+        const pdfPath = params.get('pdf') || 'AbdulazizGoodConduct.pdf';
+        const frame = document.getElementById('pdfFrame');
+        const fallback = document.getElementById('fallback');
+        const viewer = document.getElementById('viewer');
+        const fileInput = document.getElementById('fileInput');
+        const downloadLink = document.getElementById('downloadLink');
+
+        function showFallback(message){
+            viewer.style.display = 'none';
+            fallback.style.display = 'flex';
+            if(message) fallback.querySelector('p').textContent = message;
+        }
+
+        // Try to fetch HEAD to confirm existence (works when served over HTTP)
+        fetch(pdfPath, { method: 'HEAD' }).then(res => {
+            if(res.ok){
+                frame.src = pdfPath;
+                downloadLink.href = pdfPath; downloadLink.style.display = 'inline-block';
+            } else {
+                showFallback('Default PDF not found at "' + pdfPath + '". Use the file picker below or provide a valid `?pdf=` URL parameter.');
+            }
+        }).catch(()=>{
+            // If fetch fails (e.g. file:// or CORS), still attempt to set src — browser may handle it.
+            frame.src = pdfPath;
+            // Delay a short time and if frame failed to load, reveal fallback via user action.
+            setTimeout(()=>{
+                downloadLink.href = pdfPath; downloadLink.style.display = 'inline-block';
+            }, 500);
+        });
+
+        fileInput.addEventListener('change', e=>{
+            const f = e.target.files && e.target.files[0];
+            if(!f) return;
+            const url = URL.createObjectURL(f);
+            viewer.style.display = '';
+            fallback.style.display = 'none';
+            frame.src = url;
+            downloadLink.href = url; downloadLink.style.display = 'inline-block';
+        });
+    })();
+</script>
+</body>
+</html>
